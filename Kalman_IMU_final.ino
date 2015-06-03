@@ -16,7 +16,7 @@
 
 #define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 #define DEBUG_RAW 0 //Turn on/off debug logging
-#define DEBUG_YPR 1
+#define DEBUG_YPR 0
 #define DEBUG_KAL 1
 
 //Three instances for roll, pitch, yaw
@@ -28,7 +28,10 @@ Kalman kalmanY;
 double kal_roll, kal_pitch, kal_yaw;
 double roll, pitch, yaw;
 
+//Raw sensor readongs array
 float val[11];
+//Quarternion array
+float ypr[3];
 uint32_t timer;
 
 FreeIMU razor_imu = FreeIMU();
@@ -44,16 +47,14 @@ void setup()
   delay(500);
   razor_imu.getValues(val);
   
+  
   //Pitch, roll, yaw calculations
-  roll = atan(val[1]/sqrt(val[1]*val[1] + val[2]*val[2])) * RAD_TO_DEG;
-  pitch = atan2(-val[0], val[2]) * RAD_TO_DEG;
-  yaw = atan2((-val[6]*cos(roll) + val[8]*sin(roll)), 
-              (val[6]*cos(pitch) + val[7]*sin(pitch)*sin(roll)+ val[8]*sin(pitch)*cos(roll)));
-
+  razor_imu.getYawPitchRoll(ypr, val);
+  
   //Set starting angle for filters
-  kalmanR.setAngle(roll*RAD_TO_DEG);
-  kalmanP.setAngle(pitch*RAD_TO_DEG);
-  kalmanY.setAngle(yaw*RAD_TO_DEG);
+  kalmanR.setAngle(ypr[2]*RAD_TO_DEG);
+  kalmanP.setAngle(ypr[1]*RAD_TO_DEG);
+  kalmanY.setAngle(ypr[0]*RAD_TO_DEG);
   
   timer = micros();
 }
@@ -65,28 +66,22 @@ void loop()
   timer = micros();
   
   //Calculate pitch, roll, yaw
-  roll = atan(val[1]/sqrt(val[1]*val[1] + val[2]*val[2]));
-  pitch = atan2(-val[0], val[2]);  
-  yaw = atan2((-val[6]*cos(roll) + val[8]*sin(roll)), 
-              (val[6]*cos(pitch) + val[7]*sin(pitch)*sin(roll)+ val[8]*sin(pitch)*cos(roll)));
-  
-  double roll_deg = roll * RAD_TO_DEG;
-  double pitch_deg = pitch * RAD_TO_DEG;
-  double yaw_deg = yaw * RAD_TO_DEG;  
-  double roll_rate = val[3] / 131.0;
-  double pitch_rate = val[4] / 131.0;
-  double yaw_rate = val[5] / 131.0;
+  razor_imu.getYawPitchRoll(ypr, val);
+
+  double roll_rate = val[3] * 0.007634;// / 131.0;
+  double pitch_rate = val[4] * 0.007634;// / 131.0;
+  double yaw_rate = val[5] * 0.007634;// / 131.0;
   
   //Feed values into the kalman object
   //And get the filtered angle back
-  kalmanR.setAngle(roll_deg);
-  kal_roll = kalmanR.getAngle(roll_deg, roll_rate, dt);
+  kalmanR.setAngle(ypr[2]);
+  kal_roll = kalmanR.getAngle(ypr[2], roll_rate, dt);
   
-  kalmanP.setAngle(pitch*RAD_TO_DEG);
-  kal_pitch = kalmanP.getAngle(pitch_deg, pitch_rate, dt);
+  kalmanP.setAngle(ypr[1]);
+  kal_pitch = kalmanP.getAngle(ypr[1], pitch_rate, dt);
   
-  kalmanY.setAngle(yaw*RAD_TO_DEG);
-  kal_yaw = kalmanY.getAngle(yaw_deg, yaw_rate, dt);
+  kalmanY.setAngle(ypr[0]);
+  kal_yaw = kalmanY.getAngle(ypr[0], yaw_rate, dt);
   
   
   //Printing raw values (For debugging)
@@ -100,23 +95,24 @@ void loop()
   
   if(DEBUG_YPR){
     //Serial.print("YPR: ");
-    Serial.print(yaw_deg);
+    Serial.print(ypr[0]);
     Serial.print(",");
-    Serial.print(pitch_deg);
+    Serial.print(ypr[1]);
     Serial.print(",");
-    Serial.print(roll_deg);
+    Serial.print(ypr[2]);
   }
-  Serial.print(",");
+  
   if(DEBUG_KAL){
     //Serial.print("YPR: ");
-    Serial.print(kal_yaw);
-    Serial.print(",");
-    Serial.print(kal_pitch);
-    Serial.print(",");
-    Serial.print(kal_roll);
+    Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll + "," +(String)timer);
+    //Serial.print(",");
+    //Serial.print(kal_pitch);
+    //Serial.print(",");
+    //Serial.println(kal_roll);
   }
-  Serial.print(millis());
-  Serial.print("\n");
+  
+  //Serial.println(millis());
+  
   
 }
   

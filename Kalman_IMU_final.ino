@@ -23,6 +23,8 @@
 Kalman kalmanP; // Create the Kalman instances
 Kalman kalmanR;
 Kalman kalmanY;
+String inputString = ""; 
+boolean stringComplete = false;
 
 //Angle calculated using Kalman Filter
 double kal_roll, kal_pitch, kal_yaw;
@@ -57,6 +59,7 @@ void setup()
   kalmanY.setAngle(ypr[0]*RAD_TO_DEG);
   
   timer = micros();
+  inputString.reserve(5);
 }
 
 void loop()
@@ -95,25 +98,57 @@ void loop()
   
   if(DEBUG_YPR){
     //Serial.print("YPR: ");
-    Serial.print(ypr[0]);
-    Serial.print(",");
-    Serial.print(ypr[1]);
-    Serial.print(",");
-    Serial.print(ypr[2]);
+    Serial.print((String)ypr[0] + "," + 
+                 (String)ypr[1] + "," +
+                 (String)ypr[2] + ","); 
+    //Serial.print(ypr[0]);
+    //Serial.print(",");
+    //Serial.print(ypr[1]);
+    //Serial.print(",");
+    //Serial.print(ypr[2]);
   }
   
   if(DEBUG_KAL){
     //Serial.print("YPR: ");
-    Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll + "," +(String)timer);
+    //if(stringComplete)
+    //{
+    //Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
+      
+    //}
     //Serial.print(",");
     //Serial.print(kal_pitch);
     //Serial.print(",");
     //Serial.println(kal_roll);
   }
   
-  //Serial.println(millis());
   
+}
+
+void serialEvent() {
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+    inputString += inChar;
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if (inChar == '\n') {
+      stringComplete = true;
+    }
+  }
   
+  if(inputString[0] == 'b')
+  {
+    Serial.println((String)kal_yaw + "," + 
+                   (String)kal_pitch + "," + 
+                   (String)kal_roll);
+    inputString = "";
+  }
+  else
+  {
+    inputString = "";
+  }
+
 }
   
 

@@ -29,6 +29,7 @@ boolean stringComplete = false;
 //Angle calculated using Kalman Filter
 double kal_roll, kal_pitch, kal_yaw;
 double roll, pitch, yaw;
+char inChar;
 
 //Raw sensor readongs array
 float val[11];
@@ -110,11 +111,11 @@ void loop()
   
   if(DEBUG_KAL){
     //Serial.print("YPR: ");
-    //if(stringComplete)
-    //{
-    //Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
-      
-    //}
+    if(inChar == 'b')
+    {
+      Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
+      inChar = 0;
+    }
     //Serial.print(",");
     //Serial.print(kal_pitch);
     //Serial.print(",");
@@ -125,29 +126,7 @@ void loop()
 }
 
 void serialEvent() {
-  while (Serial.available()) {
-    // get the new byte:
-    char inChar = (char)Serial.read();
-    // add it to the inputString:
-    inputString += inChar;
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '\n') {
-      stringComplete = true;
-    }
-  }
-  
-  if(inputString[0] == 'b')
-  {
-    Serial.println((String)kal_yaw + "," + 
-                   (String)kal_pitch + "," + 
-                   (String)kal_roll);
-    inputString = "";
-  }
-  else
-  {
-    inputString = "";
-  }
+  inChar = (char)Serial.read();
 
 }
   

@@ -50,6 +50,11 @@ void setup()
   delay(500);
   razor_imu.getValues(val);
   
+  while(inChar != 'a')
+  {
+    inChar = Serial.read();
+  }
+  
   
   //Pitch, roll, yaw calculations
   razor_imu.getYawPitchRoll(ypr, val);
@@ -111,11 +116,10 @@ void loop()
   
   if(DEBUG_KAL){
     //Serial.print("YPR: ");
-    if(inChar == 'b')
-    {
-      Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
-      inChar = 0;
-    }
+    
+    Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
+    //inChar = 0;
+  
     //Serial.print(",");
     //Serial.print(kal_pitch);
     //Serial.print(",");
@@ -127,7 +131,7 @@ void loop()
 
 void serialEvent() {
   inChar = (char)Serial.read();
-
+  
 }
   
 

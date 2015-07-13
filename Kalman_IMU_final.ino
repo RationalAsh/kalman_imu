@@ -18,6 +18,7 @@
 #define DEBUG_RAW 0 //Turn on/off debug logging
 #define DEBUG_YPR 0
 #define DEBUG_KAL 1
+#define XBEE_ID "1"
 
 //Three instances for roll, pitch, yaw
 Kalman kalmanP; // Create the Kalman instances
@@ -44,11 +45,17 @@ void setup()
   Serial.begin(115200);
   Wire.begin();
   
+  while(inChar != '?')
+  {
+    inChar = Serial.read();
+  }
+  Serial.println("xb"+(String)XBEE_ID);
+  
   delay(500);
   //parameter enables/disables fast mode
   razor_imu.init(true);
   delay(500);
-  razor_imu.getValues(val);
+  razor_imu.getValues(val);  
   
   while(inChar != 'a')
   {
@@ -70,6 +77,11 @@ void setup()
 
 void loop()
 {
+  if(inChar == '?')
+  {
+    Serial.println("xb"+(String)XBEE_ID);
+  }
+  
   razor_imu.getValues(val);
   double dt = (double)(micros() - timer)/1000000;
   timer = micros();
@@ -117,8 +129,12 @@ void loop()
   if(DEBUG_KAL){
     //Serial.print("YPR: ");
     
-    Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
-    //inChar = 0;
+    //if(inChar == 'a')
+    //{
+      //Serial.println((String)kal_yaw + "," + (String)kal_pitch + "," + (String)kal_roll);
+      Serial.println((String)ypr[0] + "," + (String)ypr[1] + "," + (String)ypr[2]);
+      //inChar = 0;
+    //}
   
     //Serial.print(",");
     //Serial.print(kal_pitch);
@@ -130,6 +146,7 @@ void loop()
 }
 
 void serialEvent() {
+  
   inChar = (char)Serial.read();
   
 }
